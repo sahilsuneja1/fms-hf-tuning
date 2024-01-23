@@ -143,6 +143,8 @@ def train(
         data_collator = DataCollatorForCompletionOnlyLM(response_template_ids, tokenizer=tokenizer, ignore_index=configs.IGNORE_INDEX)
         packing = False
 
+    print(f"SAHIL:{peft_config}")
+
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
@@ -153,8 +155,10 @@ def train(
         args=train_args,
         max_seq_length=model_max_length,
         callbacks=callbacks,
-        peft_config=peft_config,
+        #peft_config=peft_config,
     )
+    #TODO: check for neftune_noise_alpha
+    print(f"SAHIL trainer:{trainer}")
 
     if run_distributed and peft_config is not None:
         trainer.accelerator.state.fsdp_plugin.auto_wrap_policy = fsdp_auto_wrap_policy(model)
@@ -166,7 +170,8 @@ def main(**kwargs):
                                                             configs.TrainingArguments,
                                                             peft_config.LoraConfig,
                                                             peft_config.PromptTuningConfig))
-    parser.add_argument('--peft_method', type=str.lower, choices=['pt', 'lora', None, 'none'], default="pt")
+    #parser.add_argument('--peft_method', type=str.lower, choices=['pt', 'lora', None, 'none'], default="pt")
+    parser.add_argument('--peft_method', type=str.lower, choices=['pt', 'lora', None, 'none'], default=None)
     model_args, data_args, training_args, lora_config, prompt_tuning_config, peft_method, _ = parser.parse_args_into_dataclasses(return_remaining_strings=True)
     if peft_method.peft_method =="lora":
         tune_config=lora_config
@@ -174,6 +179,7 @@ def main(**kwargs):
         tune_config=prompt_tuning_config
     else:
         tune_config=None
+    print(f"SAHIL) {tune_config}")
     train(model_args, data_args, training_args, tune_config)
 
 if __name__ == "__main__":
